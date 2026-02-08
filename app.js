@@ -1,74 +1,73 @@
-// Reel Search - Movie search app
-// Replace with your real key from https://www.omdbapi.com/apikey.aspx
-const API_KEY = "your_omdb_api_key_here";   // ← CHANGE THIS LINE !!!
+// Reel Search - Movie Finder App (fixed version)
+// IMPORTANT: Replace the line below with YOUR REAL OMDb API key
+// Get free key: https://www.omdbapi.com/apikey.aspx
+const API_KEY = "your_real_api_key_here";   // ← CHANGE THIS !!!
+
 const BASE_URL = "https://www.omdbapi.com/";
 
 const elements = {
-  movieQuery: document.getElementById("movieQuery"),
-  searchBtn: document.getElementById("searchBtn"),
+  movieQuery: document.getElementById("movie-query"),
+  searchBtn: document.getElementById("search-btn"),
   loading: document.getElementById("loading"),
-  error: document.getElementById("error"),
-  resultsSection: document.getElementById("resultsSection"),
-  resultsHeading: document.getElementById("resultsHeading"),
-  resultsGrid: document.getElementById("resultsGrid"),
-  pagination: document.getElementById("pagination"),
-  detailSection: document.getElementById("detailSection"),
-  backBtn: document.getElementById("backBtn"),
-  detailContent: document.getElementById("detailContent"),
-  watchlistSection: document.getElementById("watchlistSection"),
-  watchlistGrid: document.getElementById("watchlistGrid"),
-  watchlistEmpty: document.getElementById("watchlistEmpty"),
-  emptyState: document.getElementById("emptyState")
+  errorMessage: document.getElementById("error-message"),
+  resultsSection: document.getElementById("results-section"),
+  resultsTitle: document.getElementById("results-title"),
+  resultsGrid: document.getElementById("results-grid"),
+  detailSection: document.getElementById("detail-section"),
+  backBtn: document.getElementById("back-btn"),
+  detailContent: document.getElementById("detail-content"),
+  emptyState: document.getElementById("empty-state")
 };
-
-let currentPage = 1;
-let lastQuery = "";
 
 function showLoading(show) {
   elements.loading.classList.toggle("hidden", !show);
 }
 
 function showError(msg) {
-  elements.error.textContent = msg;
-  elements.error.classList.remove("hidden");
+  elements.errorMessage.textContent = msg;
+  elements.errorMessage.classList.remove("hidden");
 }
 
 function hideError() {
-  elements.error.classList.add("hidden");
+  elements.errorMessage.classList.add("hidden");
 }
 
-function showSection(sectionId) {
-  document.querySelectorAll('.panel').forEach(el => el.classList.add('hidden'));
-  document.getElementById(sectionId)?.classList.remove('hidden');
+function showView(viewId) {
+  document.querySelectorAll('section[id$="-section"]').forEach(sec => sec.classList.add("hidden"));
+  document.getElementById(viewId)?.classList.remove("hidden");
 }
 
 async function searchMovies() {
   const query = elements.movieQuery.value.trim();
-  if (!query) return showError("Please enter a movie name");
+  if (!query) {
+    showError("Please enter a movie title");
+    return;
+  }
 
-  if (API_KEY === "your_omdb_api_key_here") {
-    return showError("Please add your real OMDb API key in app.js");
+  if (API_KEY === "your_real_api_key_here" || API_KEY === "your_omdb_api_key_here") {
+    showError("Please add your real OMDb API key in app.js (line 4)");
+    return;
   }
 
   showLoading(true);
   hideError();
-  showSection("resultsSection");
+  showView("results-section");
 
   try {
-    const url = `\( {BASE_URL}?apikey= \){API_KEY}&s=\( {encodeURIComponent(query)}&page= \){currentPage}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const url = `\( {BASE_URL}?apikey= \){API_KEY}&s=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+    const data = await response.json();
 
     if (data.Response === "False") {
-      showError(data.Error || "No results found");
-      showSection("emptyState");
+      showError(data.Error || "No movies found");
+      showView("empty-state");
       return;
     }
 
-    elements.resultsHeading.textContent = `Results for "\( {query}" ( \){data.totalResults} found)`;
+    elements.resultsTitle.textContent = `Results for "${query}"`;
     renderResults(data.Search || []);
   } catch (err) {
-    showError("Network error or invalid API key");
+    showError("Failed to load results. Check internet or API key.");
     console.error(err);
   } finally {
     showLoading(false);
@@ -76,62 +75,64 @@ async function searchMovies() {
 }
 
 function renderResults(movies) {
-  elements.resultsGrid.innerHTML = movies.map(m => `
-    <div class="movie-card" data-id="${m.imdbID}">
-      \( {m.Poster !== "N/A" ? `<img src=" \){m.Poster}" alt="${m.Title}">` : '<div class="no-poster">No Poster</div>'}
-      <h3>${m.Title}</h3>
-      <p>${m.Year} • ${m.Type}</p>
+  elements.resultsGrid.innerHTML = movies.map(movie => `
+    <div class="movie-card" onclick="showDetail('${movie.imdbID}')">
+      ${movie.Poster !== "N/A" 
+        ? `<img src="\( {movie.Poster}" alt=" \){movie.Title}">` 
+        : '<div class="no-poster">No Poster</div>'}
+      <div class="card-info">
+        <h3>${movie.Title}</h3>
+        <p>${movie.Year} • ${movie.Type}</p>
+      </div>
     </div>
   `).join("");
-
-  elements.resultsGrid.querySelectorAll(".movie-card").forEach(card => {
-    card.addEventListener("click", () => showMovieDetail(card.dataset.id));
-  });
 }
 
-async function showMovieDetail(id) {
+async function showDetail(imdbID) {
   showLoading(true);
-  showSection("detailSection");
+  showView("detail-section");
 
   try {
-    const url = `\( {BASE_URL}?apikey= \){API_KEY}&i=${id}&plot=full`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const url = `\( {BASE_URL}?apikey= \){API_KEY}&i=${imdbID}&plot=full`;
+    const response = await fetch(url);
+    const movie = await response.json();
 
-    if (data.Response === "False") {
-      showError(data.Error);
+    if (movie.Response === "False") {
+      showError(movie.Error || "Movie not found");
       return;
     }
 
-    const actors = data.Actors?.split(", ") || [];
+    const actors = movie.Actors?.split(", ") || [];
     const hero = actors[0] || "—";
     const heroine = actors[1] || "—";
 
     elements.detailContent.innerHTML = `
-      <div class="detail-header">
-        \( {data.Poster !== "N/A" ? `<img src=" \){data.Poster}" class="detail-poster">` : '<div class="no-poster big">No Poster</div>'}
-        <div>
-          <h1>\( {data.Title} ( \){data.Year})</h1>
-          <p>${data.Runtime} • ${data.Genre} • ${data.Rated}</p>
-          <p><strong>IMDb:</strong> ${data.imdbRating || "—"} / 10</p>
+      <div class="detail-poster">
+        ${movie.Poster !== "N/A" 
+          ? `<img src="\( {movie.Poster}" alt=" \){movie.Title}">` 
+          : '<div class="no-poster large">No Poster</div>'}
+      </div>
+
+      <div class="detail-body">
+        <h1>\( {movie.Title} ( \){movie.Year})</h1>
+        <p class="meta">${movie.Runtime} • ${movie.Genre} • Rated ${movie.Rated || "N/A"}</p>
+        
+        <p><strong>IMDb:</strong> ${movie.imdbRating || "N/A"} / 10</p>
+        
+        <p class="plot"><strong>Plot:</strong> ${movie.Plot || "No plot available."}</p>
+        
+        <div class="cast-info">
+          <h3>Cast & Crew</h3>
+          <p><strong>Director:</strong> ${movie.Director || "—"}</p>
+          <p><strong>Hero / Lead:</strong> ${hero}</p>
+          <p><strong>Heroine / Lead Actress:</strong> ${heroine}</p>
+          <p><strong>Writer:</strong> ${movie.Writer || "—"}</p>
+          <p><strong>Actors:</strong> ${movie.Actors || "—"}</p>
         </div>
+
+        <p><strong>Language:</strong> ${movie.Language || "—"}</p>
+        <p><strong>Awards:</strong> ${movie.Awards || "None listed"}</p>
       </div>
-
-      <p><strong>Plot:</strong> ${data.Plot || "No plot available"}</p>
-
-      <div class="cast-section">
-        <h3>Cast & Crew</h3>
-        <p><strong>Director:</strong> ${data.Director || "—"}</p>
-        <p><strong>Hero / Lead:</strong> ${hero}</p>
-        <p><strong>Heroine / Lead Actress:</strong> ${heroine}</p>
-        <p><strong>Main Cast:</strong> ${actors.slice(0,4).join(", ") || "—"}</p>
-        <p><strong>Full Cast:</strong> ${data.Actors || "—"}</p>
-        <p><strong>Writer:</strong> ${data.Writer || "—"}</p>
-      </div>
-
-      <p><strong>Language:</strong> ${data.Language || "—"} • <strong>Country:</strong> ${data.Country || "—"}</p>
-      <p><strong>Awards:</strong> ${data.Awards || "None listed"}</p>
-      <p><strong>Box Office:</strong> ${data.BoxOffice || "Not available"}</p>
     `;
   } catch (err) {
     showError("Could not load movie details");
@@ -141,11 +142,19 @@ async function showMovieDetail(id) {
   }
 }
 
+// Event listeners
 elements.searchBtn.addEventListener("click", searchMovies);
-elements.movieQuery.addEventListener("keypress", e => {
-  if (e.key === "Enter") searchMovies();
+
+elements.movieQuery.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    searchMovies();
+  }
 });
 
 elements.backBtn.addEventListener("click", () => {
-  showSection("resultsSection");
+  showView("results-section");
 });
+
+// Initial view
+showView("search-section");
