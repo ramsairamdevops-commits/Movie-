@@ -24,51 +24,38 @@
   <main class="dashboard-main">
     <section id="searchSection" class="panel search-panel">
       <div class="search-box">
-        <input type="text" id="movieQuery" placeholder="Search by title (e.g. RRR, Inception)…" autocomplete="off" aria-label="Search movies">
-        <button type="button" id="searchBtn" class="btn-search">Find it</button>
+        <input type="text" id="movieQuery" placeholder="Search any movie (e.g. RRR)…" autocomplete="off">
+        <button id="searchBtn" class="btn-search">Search</button>
       </div>
     </section>
 
-    <div id="loading" class="loading hidden">
-      <div class="spinner"></div>
-      <p>Searching the reels…</p>
-    </div>
+    <div id="loading" class="loading hidden">Loading...</div>
+    <div id="error" class="error hidden"></div>
 
-    <div id="error" class="error hidden" role="alert"></div>
-
-    <section id="resultsSection" class="panel results-panel hidden">
-      <div class="panel-header">
-        <h2 id="resultsHeading" class="panel-title">Results</h2>
-      </div>
+    <section id="resultsSection" class="panel hidden">
+      <h2 id="resultsHeading">Results</h2>
       <div id="resultsGrid" class="results-grid"></div>
       <div id="pagination" class="pagination hidden"></div>
     </section>
 
-    <section id="detailSection" class="panel detail-panel hidden">
-      <button type="button" id="backBtn" class="btn-back">← Back to results</button>
-      <article id="detailContent" class="detail-content"></article>
+    <section id="detailSection" class="panel hidden">
+      <button id="backBtn" class="btn-back">← Back</button>
+      <div id="detailContent"></div>
     </section>
 
-    <section id="watchlistSection" class="panel watchlist-panel hidden">
-      <div class="panel-header">
-        <h2 class="panel-title">My List</h2>
-        <span id="watchlistCountLabel" class="panel-meta"></span>
-      </div>
+    <section id="watchlistSection" class="panel hidden">
+      <h2>My List</h2>
       <div id="watchlistGrid" class="results-grid"></div>
-      <p id="watchlistEmpty" class="watchlist-empty hidden">No titles yet. Search and tap ♥ to add some magic.</p>
+      <p id="watchlistEmpty" class="hidden">Your list is empty</p>
     </section>
 
-    <section id="emptyState" class="panel empty-panel">
-      <div class="empty-content">
-        <p class="empty-prompt">Start typing a movie title above to discover reels! 🌟</p>
-      </div>
+    <section id="emptyState" class="panel">
+      <p>Start searching for movies above! 🎬</p>
     </section>
   </main>
 
-  <footer class="dashboard-footer">
-    <p>Free · No account · Built with ❤️ from Mumbai</p>
-  </footer>
+  <footer>Free movie search • Built in Mumbai</footer>
 
   <script src="app.js"></script>
 </body>
-</html>
+  </html>
